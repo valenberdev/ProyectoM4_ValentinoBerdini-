@@ -3,6 +3,11 @@ import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
+import { auth, db } from './services/firebase/firebaseConfig';
+
+console.log('Auth:', auth);
+console.log('Firestore:', db);
+
 
 function App() {
   const [count, setCount] = useState(0)
