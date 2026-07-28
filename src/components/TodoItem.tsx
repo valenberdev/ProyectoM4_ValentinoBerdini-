@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { type Task } from '../types/task';
+import './todo.css';
 
 interface TodoItemProps {
   task: Task;
@@ -10,6 +11,18 @@ interface TodoItemProps {
   onUpdate: (taskId: string, fields: Partial<Task>) => void;
   dragHabilitado: boolean;
 }
+
+const PRIORITY_COLOR: Record<Task['priority'], string> = {
+  high: 'var(--high)',
+  medium: 'var(--medium)',
+  low: 'var(--low)',
+};
+
+const PRIORITY_LABEL: Record<Task['priority'], string> = {
+  high: 'Alta',
+  medium: 'Media',
+  low: 'Baja',
+};
 
 export function TodoItem({ task, onToggleComplete, onDelete, onUpdate, dragHabilitado }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -24,6 +37,7 @@ export function TodoItem({ task, onToggleComplete, onDelete, onUpdate, dragHabil
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    borderLeftColor: PRIORITY_COLOR[task.priority],
   };
 
   function handleCancel() {
@@ -39,28 +53,72 @@ export function TodoItem({ task, onToggleComplete, onDelete, onUpdate, dragHabil
 
   if (isEditing) {
     return (
-      <li ref={setNodeRef} style={style}>
-        <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-        <input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
-        <button onClick={handleSave}>Guardar</button>
-        <button onClick={handleCancel}>Cancelar</button>
+      <li ref={setNodeRef} style={style} className="todo-item">
+        <div className="todo-item-edit">
+          <input
+            className="todo-input"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+          />
+          <input
+            className="todo-input"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+          />
+          <div className="todo-item-actions">
+            <button onClick={handleSave}>Guardar</button>
+            <button onClick={handleCancel}>Cancelar</button>
+          </div>
+        </div>
       </li>
     );
   }
 
   return (
-  <li ref={setNodeRef} style={style}>
-    <span {...attributes} {...listeners} style={{ cursor: 'grab', marginRight: '8px' }}>
-      ⠿
-    </span>
-    <input
-      type="checkbox"
-      checked={task.completed}
-      onChange={(e) => onToggleComplete(task.id, e.target.checked)}
-    />
-    <span>{task.title}</span> — <span>{task.priority}</span>
-    <button onClick={() => setIsEditing(true)}>Editar</button>
-    <button onClick={() => onDelete(task.id)}>Eliminar</button>
-  </li>
-);
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`todo-item${task.completed ? ' completed' : ''}`}
+    >
+      <span {...attributes} {...listeners} className="todo-item-drag-handle">
+        ⠿
+      </span>
+
+      <div
+        role="checkbox"
+        aria-checked={task.completed}
+        tabIndex={0}
+        className={`todo-item-checkbox${task.completed ? ' checked' : ''}`}
+        onClick={() => onToggleComplete(task.id, !task.completed)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggleComplete(task.id, !task.completed);
+          }
+        }}
+      >
+        {task.completed && '✓'}
+      </div>
+
+      <div className="todo-item-body">
+        <span className="todo-item-title">{task.title}</span>
+        {task.description && (
+          <span className="todo-item-description">{task.description}</span>
+        )}
+        <div className="todo-item-meta">
+          <span style={{ color: PRIORITY_COLOR[task.priority] }}>
+            {PRIORITY_LABEL[task.priority]}
+          </span>
+          {task.dueDate && (
+            <span className="date">{task.dueDate.toLocaleDateString('es-AR')}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="todo-item-actions">
+        <button onClick={() => setIsEditing(true)}>Editar</button>
+        <button onClick={() => onDelete(task.id)}>Eliminar</button>
+      </div>
+    </li>
+  );
 }

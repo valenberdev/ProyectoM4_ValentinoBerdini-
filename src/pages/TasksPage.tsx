@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useTasks } from "../hooks/useTasks";
 import { TodoForm } from "../components/TodoForm";
 import { TodoList } from "../components/TodoList";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { type Task } from "../types/task";
 import {
   toggleTaskCompletion,
@@ -20,6 +21,10 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import "./tasks.css";
+
+const RADIO_ANILLO = 32;
+const CIRCUNFERENCIA = 2 * Math.PI * RADIO_ANILLO;
 
 export function TasksPage() {
   const { user } = useAuth();
@@ -100,53 +105,137 @@ export function TasksPage() {
     }
   }
 
+  const totalTasks = tasks.length;
+  const completedCount = tasks.filter((t) => t.completed).length;
+  const porcentajeCompletado =
+    totalTasks === 0 ? 0 : (completedCount / totalTasks) * 100;
+  const dashOffset =
+    CIRCUNFERENCIA - (porcentajeCompletado / 100) * CIRCUNFERENCIA;
+
+  const fechaHoy = new Date().toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
   return (
     <div>
-      <h1>Mis tareas</h1>
-      <button onClick={() => cerrarSesion()}>Cerrar sesión</button>
+      <header className="tasks-header">
+        <div className="tasks-header-top">
+          <p className="tasks-brand">◆ tareas</p>
+          <div className="tasks-header-actions">
+            <button
+              className="tasks-logout-btn"
+              onClick={() => cerrarSesion()}
+            >
+              Cerrar sesión
+            </button>
+            <ThemeToggle />
+          </div>
+        </div>
 
-      <TodoForm />
+        <div className="tasks-hero">
+          <svg
+            className="tasks-ring"
+            width="76"
+            height="76"
+            viewBox="0 0 76 76"
+          >
+            <circle
+              cx="38"
+              cy="38"
+              r={RADIO_ANILLO}
+              fill="none"
+              stroke="var(--hairline)"
+              strokeWidth="6"
+            />
+            <circle
+              cx="38"
+              cy="38"
+              r={RADIO_ANILLO}
+              fill="none"
+              stroke="var(--signal)"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUNFERENCIA}
+              strokeDashoffset={dashOffset}
+            />
+          </svg>
+          <div>
+            <p className="tasks-eyebrow">{fechaHoy}</p>
+            <p className="tasks-headline">
+              {completedCount} de {totalTasks} tareas completadas
+            </p>
+          </div>
+        </div>
+      </header>
 
-      {loading && <p>Cargando tareas...</p>}
-      {error && <p>{error}</p>}
+      <main className="tasks-main">
+        <TodoForm />
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={tasksOrdenadas.map((task) => task.id)}
-          strategy={verticalListSortingStrategy}
+        {loading && <p className="tasks-loading">Cargando tareas...</p>}
+        {error && <div className="tasks-error">{error}</div>}
+
+        <div className="chip-bar">
+          <button
+            className={`chip ${filtro === "all" ? "active" : ""}`}
+            onClick={() => setFiltro("all")}
+          >
+            Todas
+          </button>
+          <button
+            className={`chip ${filtro === "pending" ? "active" : ""}`}
+            onClick={() => setFiltro("pending")}
+          >
+            Pendientes
+          </button>
+          <button
+            className={`chip ${filtro === "completed" ? "active" : ""}`}
+            onClick={() => setFiltro("completed")}
+          >
+            Completadas
+          </button>
+          <select
+            className="chip chip-select"
+            value={ordenarPor}
+            onChange={(e) =>
+              setOrdenarPor(e.target.value as "none" | "priority" | "dueDate")
+            }
+          >
+            <option value="none">Sin ordenar</option>
+            <option value="priority">Por prioridad</option>
+            <option value="dueDate">Por fecha de vencimiento</option>
+          </select>
+        </div>
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <TodoList
-            tasks={tasksOrdenadas}
-            onToggleComplete={toggleTaskCompletion}
-            onDelete={deleteTask}
-            onUpdate={updateTask}
-            dragHabilitado={ordenarPor === "none"}
-          />
-        </SortableContext>
-      </DndContext>
+          <SortableContext
+            items={tasksOrdenadas.map((task) => task.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <TodoList
+              tasks={tasksOrdenadas}
+              onToggleComplete={toggleTaskCompletion}
+              onDelete={deleteTask}
+              onUpdate={updateTask}
+              dragHabilitado={ordenarPor === "none"}
+            />
+          </SortableContext>
+        </DndContext>
 
-      <select
-        value={ordenarPor}
-        onChange={(e) =>
-          setOrdenarPor(e.target.value as "none" | "priority" | "dueDate")
-        }
-      >
-        <option value="none">Sin ordenar</option>
-        <option value="priority">Por prioridad</option>
-        <option value="dueDate">Por fecha de vencimiento</option>
-      </select>
-
-      <button onClick={() => setFiltro("all")}>Todas</button>
-      <button onClick={() => setFiltro("pending")}>Pendientes</button>
-      <button onClick={() => setFiltro("completed")}>Completadas</button>
-      <button onClick={handleEnviarResumen} disabled={enviandoResumen}>
-        {enviandoResumen ? "Enviando..." : "Enviar resumen por email"}
-      </button>
-      {resumenError && <p>{resumenError}</p>}
+        <button
+          className="tasks-secondary-btn"
+          onClick={handleEnviarResumen}
+          disabled={enviandoResumen}
+        >
+          {enviandoResumen ? "Enviando..." : "Enviar resumen por email"}
+        </button>
+        {resumenError && <div className="tasks-error">{resumenError}</div>}
+      </main>
     </div>
   );
 }

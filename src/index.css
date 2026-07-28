@@ -1,4 +1,19 @@
 :root {
+  /* Design system tokens (dark, default) */
+  --deep-slate: #12141c;
+  --panel: #1b1f2b;
+  --panel-hover: #212637;
+  --hairline: #2a2f3f;
+  --ink: #e8eaf0;
+  --mist: #8b92a8;
+  --signal: #5eead4;
+  --signal-dim: rgba(94, 234, 212, 0.12);
+  --high: #fb7185;
+  --medium: #fbbf24;
+  --low: #64748b;
+  --danger: #fb7185;
+  --danger-dim: rgba(251, 113, 133, 0.12);
+
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
@@ -50,6 +65,17 @@
   }
 }
 
+[data-theme='light'] {
+  --deep-slate: #f5f6fa;
+  --panel: #ffffff;
+  --panel-hover: #f0f1f6;
+  --hairline: #e2e4ec;
+  --ink: #1a1d29;
+  --mist: #6b7185;
+  --signal: #0d9488;
+  --signal-dim: rgba(20, 184, 166, 0.1);
+}
+
 #root {
   width: 1126px;
   max-width: 100%;
@@ -64,6 +90,16 @@
 
 body {
   margin: 0;
+  background: var(--deep-slate);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }
 
 h1,

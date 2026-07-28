@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { registrarUsuario } from '../features/auth/authService';
+import { Link, useNavigate } from 'react-router-dom';
+import { registrarUsuario, iniciarSesionConGoogle } from '../features/auth/authService';
 import { validarEmail, validarPassword } from '../utils/validators';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { GoogleIcon } from '../components/GoogleIcon';
+import './auth.css';
 
 export function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -34,29 +37,76 @@ export function RegisterPage() {
     }
   }
 
+  async function handleGoogleLogin() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await iniciarSesionConGoogle();
+      navigate('/tasks');
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Registrarse</h1>
+    <div className="auth-container">
+      <div style={{ position: 'fixed', top: 20, right: 20 }}>
+        <ThemeToggle />
+      </div>
 
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-      />
+      <div className="auth-card">
+        <p className="auth-brand">◆ tareas</p>
+        <p className="auth-subtitle">Creá tu cuenta para empezar</p>
 
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Contraseña"
-      />
+        {error && <div className="auth-error">{error}</div>}
 
-      {error && <p>{error}</p>}
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-field">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+            />
+          </div>
 
-      <button type="submit" disabled={loading}>
-        {loading ? 'Registrando...' : 'Registrarse'}
-      </button>
-    </form>
+          <div className="auth-field">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button className="auth-submit" type="submit" disabled={loading}>
+            {loading ? 'Registrando...' : 'Registrarse'}
+          </button>
+        </form>
+
+        <div className="auth-divider">o continuá con</div>
+
+        <button
+          type="button"
+          className="auth-google-btn"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
+          <GoogleIcon />
+          Continuar con Google
+        </button>
+
+        <p className="auth-footer">
+          ¿Ya tenés cuenta? <Link to="/login">Iniciá sesión</Link>
+        </p>
+      </div>
+    </div>
   );
 }

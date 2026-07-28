@@ -17,7 +17,16 @@ export function TodoList({
   dragHabilitado,
 }: TodoListProps) {
   return (
-    <ul>
+    <ul
+      style={{
+        listStyle: "none",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        margin: 0,
+        padding: 0,
+      }}
+    >
       {tasks.map((task) => (
         <TodoItem
           key={task.id}
