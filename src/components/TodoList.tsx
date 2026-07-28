@@ -1,14 +1,21 @@
-import { type Task } from '../types/task';
-import { TodoItem } from './TodoItem';
+import { type Task } from "../types/task";
+import { TodoItem } from "./TodoItem";
 
 interface TodoListProps {
   tasks: Task[];
   onToggleComplete: (taskId: string, completed: boolean) => void;
   onDelete: (taskId: string) => void;
   onUpdate: (taskId: string, fields: Partial<Task>) => void;
+  dragHabilitado: boolean;
 }
 
-export function TodoList({ tasks, onToggleComplete, onDelete, onUpdate }: TodoListProps) {
+export function TodoList({
+  tasks,
+  onToggleComplete,
+  onDelete,
+  onUpdate,
+  dragHabilitado,
+}: TodoListProps) {
   return (
     <ul>
       {tasks.map((task) => (
@@ -18,6 +25,7 @@ export function TodoList({ tasks, onToggleComplete, onDelete, onUpdate }: TodoLi
           onToggleComplete={onToggleComplete}
           onDelete={onDelete}
           onUpdate={onUpdate}
+          dragHabilitado={dragHabilitado}
         />
       ))}
     </ul>
