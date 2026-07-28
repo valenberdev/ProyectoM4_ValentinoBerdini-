@@ -14,9 +14,15 @@ import {
 export function TasksPage() {
   const { user } = useAuth();
   const { tasks, loading, error } = useTasks();
-
   const [enviandoResumen, setEnviandoResumen] = useState(false);
   const [resumenError, setResumenError] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState<'all' | 'pending' | 'completed'>('all');
+
+  const tasksFiltradas = tasks.filter((task) => {
+    if (filtro === 'pending') return !task.completed;
+    if (filtro === 'completed') return task.completed;
+    return true; // 'all'
+  });
 
   async function handleEnviarResumen() {
     if (!user) return;
@@ -59,12 +65,15 @@ export function TasksPage() {
       {error && <p>{error}</p>}
 
       <TodoList
-        tasks={tasks}
+        tasks={tasksFiltradas}
         onToggleComplete={toggleTaskCompletion}
         onDelete={deleteTask}
         onUpdate={updateTask}
       />
 
+      <button onClick={() => setFiltro('all')}>Todas</button>
+      <button onClick={() => setFiltro('pending')}>Pendientes</button>
+      <button onClick={() => setFiltro('completed')}>Completadas</button>
       <button onClick={handleEnviarResumen} disabled={enviandoResumen}>
         {enviandoResumen ? 'Enviando...' : 'Enviar resumen por email'}
       </button>
