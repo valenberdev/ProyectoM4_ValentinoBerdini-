@@ -67,3 +67,27 @@ export async function updateTask(
 export async function toggleTaskCompletion(taskId: string, completed: boolean) {
   await updateTask(taskId, { completed });
 }
+
+interface ResumenTareas {
+  pendingTasks: { title: string; priority: Task['priority'] }[];
+  completedTasks: { title: string }[];
+}
+
+const ORDEN_PRIORIDAD: Record<Task['priority'], number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+};
+
+export function armarResumenTareas(tasks: Task[]): ResumenTareas {
+  const pendingTasks = tasks
+    .filter((task) => !task.completed)
+    .sort((a, b) => ORDEN_PRIORIDAD[a.priority] - ORDEN_PRIORIDAD[b.priority])
+    .map((task) => ({ title: task.title, priority: task.priority }));
+
+  const completedTasks = tasks
+    .filter((task) => task.completed)
+    .map((task) => ({ title: task.title }));
+
+  return { pendingTasks, completedTasks };
+}
