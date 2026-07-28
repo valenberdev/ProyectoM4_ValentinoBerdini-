@@ -73,7 +73,7 @@ interface ResumenTareas {
   completedTasks: { title: string }[];
 }
 
-const ORDEN_PRIORIDAD: Record<Task['priority'], number> = {
+export const ORDEN_PRIORIDAD: Record<Task['priority'], number> = {
   high: 0,
   medium: 1,
   low: 2,
