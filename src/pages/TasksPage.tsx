@@ -1,6 +1,8 @@
 import { cerrarSesion } from '../features/auth/authService';
 import { useTasks } from '../hooks/useTasks';
 import { TodoForm } from '../components/TodoForm';
+import { TodoList } from '../components/TodoList';
+import { toggleTaskCompletion, deleteTask, updateTask } from '../features/tasks/taskService';
 
 export function TasksPage() {
   const { tasks, loading, error } = useTasks();
@@ -14,11 +16,13 @@ export function TasksPage() {
 
       {loading && <p>Cargando tareas...</p>}
       {error && <p>{error}</p>}
-      <ul>
-        {tasks.map((task) => (
-          <li key={task.id}>{task.title} — {task.priority}</li>
-        ))}
-      </ul>
+
+      <TodoList
+        tasks={tasks}
+        onToggleComplete={toggleTaskCompletion}
+        onDelete={deleteTask}
+        onUpdate={updateTask}
+      />
     </div>
   );
 }
