@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { createTask } from '../features/tasks/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { useTasks } from '../hooks/useTasks';
+import { useCreateTask } from '../hooks/useCreateTask';
 import { type Task } from '../types/task';
 import './todo.css';
 
@@ -9,49 +8,16 @@ export function TodoForm() {
   const { user } = useAuth();
   const { tasks } = useTasks();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<Task['priority']>('medium');
-  const [dueDate, setDueDate] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    title, setTitle,
+    description, setDescription,
+    priority, setPriority,
+    dueDate, setDueDate,
+    loading, error,
+    handleSubmit,
+  } = useCreateTask(user, tasks.length);
 
   if (!user) return null;
-
-  const currentUser = user;
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!title.trim()) {
-      setError('El título es obligatorio');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      await createTask(
-        currentUser.uid,
-        {
-          title,
-          description,
-          priority,
-          dueDate: dueDate ? new Date(dueDate) : null,
-        },
-       tasks.length,
-      );
-      setTitle('');
-      setDescription('');
-      setPriority('medium');
-      setDueDate('');
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <div className="todo-form-card">
@@ -74,15 +40,9 @@ export function TodoForm() {
           value={priority}
           onChange={(e) => setPriority(e.target.value as Task['priority'])}
         >
-          <option value="low" style={{ color: 'var(--low)' }}>
-            Baja
-          </option>
-          <option value="medium" style={{ color: 'var(--medium)' }}>
-            Media
-          </option>
-          <option value="high" style={{ color: 'var(--high)' }}>
-            Alta
-          </option>
+          <option value="low" style={{ color: 'var(--low)' }}>Baja</option>
+          <option value="medium" style={{ color: 'var(--medium)' }}>Media</option>
+          <option value="high" style={{ color: 'var(--high)' }}>Alta</option>
         </select>
         <input
           className="todo-input"

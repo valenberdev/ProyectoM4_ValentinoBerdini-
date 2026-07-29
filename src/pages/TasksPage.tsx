@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
 import { cerrarSesion } from "../features/auth/authService";
 import { useAuth } from "../hooks/useAuth";
 import { useTasks } from "../hooks/useTasks";
+import { useSortedFilteredTasks } from "../hooks/useSortedFilteredTasks";
+import { useSendSummary } from "../hooks/useSendSummary";
+import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { TodoForm } from "../components/TodoForm";
 import { TodoList } from "../components/TodoList";
 import { ThemeToggle } from "../components/ThemeToggle";
@@ -10,17 +12,13 @@ import {
   toggleTaskCompletion,
   deleteTask,
   updateTask,
-  armarResumenTareas,
-  ORDEN_PRIORIDAD,
 } from "../features/tasks/taskService";
-import { arrayMove } from "@dnd-kit/sortable";
-import { type DragEndEvent } from "@dnd-kit/core";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { useState } from "react";
 import "./tasks.css";
 
 const RADIO_ANILLO = 32;
@@ -29,67 +27,15 @@ const CIRCUNFERENCIA = 2 * Math.PI * RADIO_ANILLO;
 export function TasksPage() {
   const { user } = useAuth();
   const { tasks, loading, error } = useTasks();
-  const [dragError, setDragError] = useState<string | null>(null);
   const [taskActionError, setTaskActionError] = useState<string | null>(null);
-  const [enviandoResumen, setEnviandoResumen] = useState(false);
-  const [resumenError, setResumenError] = useState<string | null>(null);
-  const [resumenExitoso, setResumenExitoso] = useState(false);
-  const [filtro, setFiltro] = useState<"all" | "pending" | "completed">("all");
-  const [ordenarPor, setOrdenarPor] = useState<"none" | "priority" | "dueDate">(
-    "none",
-  );
-  const sensors = useSensors(useSensor(PointerSensor));
 
-  const tasksFiltradas = tasks.filter((task) => {
-    if (filtro === "pending") return !task.completed;
-    if (filtro === "completed") return task.completed;
-    return true;
-  });
+  const { tasksOrdenadas, filtro, setFiltro, ordenarPor, setOrdenarPor } =
+    useSortedFilteredTasks(tasks);
 
-  function compararPorFecha(a: Task, b: Task): number {
-    if (a.dueDate === null && b.dueDate === null) return 0;
-    if (a.dueDate === null) return 1;
-    if (b.dueDate === null) return -1;
-    return a.dueDate.getTime() - b.dueDate.getTime();
-  }
+  const { enviandoResumen, resumenError, resumenExitoso, handleEnviarResumen } =
+    useSendSummary(user, tasks);
 
-  function compararPorPrioridad(a: Task, b: Task): number {
-    return ORDEN_PRIORIDAD[a.priority] - ORDEN_PRIORIDAD[b.priority];
-  }
-
-  const tasksOrdenadas = [...tasksFiltradas].sort((a, b) => {
-    if (ordenarPor === "priority") return compararPorPrioridad(a, b);
-    if (ordenarPor === "dueDate") return compararPorFecha(a, b);
-    return a.order - b.order;
-  });
-
-  useEffect(() => {
-  if (resumenExitoso) {
-    const timer = setTimeout(() => setResumenExitoso(false), 4000);
-    return () => clearTimeout(timer);
-  }
-}, [resumenExitoso]);
-
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = tasksOrdenadas.findIndex((task) => task.id === active.id);
-    const newIndex = tasksOrdenadas.findIndex((task) => task.id === over.id);
-
-    const nuevoOrden = arrayMove(tasksOrdenadas, oldIndex, newIndex);
-
-    try {
-      await Promise.all(
-        nuevoOrden.map((task, index) => updateTask(task.id, { order: index })),
-      );
-      setDragError(null);
-    } catch (err) {
-      setDragError("No se pudo guardar el nuevo orden. Intentá de nuevo.");
-      console.error("Error al reordenar tareas:", err);
-    }
-  }
+  const { sensors, dragError, handleDragEnd } = useDragAndDrop(tasksOrdenadas);
 
   async function handleToggleComplete(taskId: string, completed: boolean) {
     try {
@@ -118,39 +64,6 @@ export function TasksPage() {
     } catch (err) {
       setTaskActionError("No se pudo editar la tarea. Intentá de nuevo.");
       console.error("Error al editar tarea:", err);
-    }
-  }
-
-  async function handleEnviarResumen() {
-    if (!user) return;
-    const currentUser = user;
-
-    setEnviandoResumen(true);
-    setResumenError(null);
-    setResumenExitoso(false);
-
-    const { pendingTasks, completedTasks } = armarResumenTareas(tasks);
-
-    try {
-      const response = await fetch("/api/send-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          toEmail: currentUser.email,
-          pendingTasks,
-          completedTasks,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudo enviar el resumen");
-      }
-
-      setResumenExitoso(true);
-    } catch (err) {
-      setResumenError((err as Error).message);
-    } finally {
-      setEnviandoResumen(false);
     }
   }
 
@@ -188,27 +101,14 @@ export function TasksPage() {
         </div>
 
         <div className="tasks-hero">
-          <svg
-            className="tasks-ring"
-            width="76"
-            height="76"
-            viewBox="0 0 76 76"
-          >
+          <svg className="tasks-ring" width="76" height="76" viewBox="0 0 76 76">
             <circle
-              cx="38"
-              cy="38"
-              r={RADIO_ANILLO}
-              fill="none"
-              stroke="var(--hairline)"
-              strokeWidth="6"
+              cx="38" cy="38" r={RADIO_ANILLO}
+              fill="none" stroke="var(--hairline)" strokeWidth="6"
             />
             <circle
-              cx="38"
-              cy="38"
-              r={RADIO_ANILLO}
-              fill="none"
-              stroke="var(--signal)"
-              strokeWidth="6"
+              cx="38" cy="38" r={RADIO_ANILLO}
+              fill="none" stroke="var(--signal)" strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={CIRCUNFERENCIA}
               strokeDashoffset={dashOffset}
