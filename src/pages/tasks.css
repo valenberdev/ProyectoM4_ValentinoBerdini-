@@ -143,3 +143,7 @@
   font-size: 14px;
 }
 
+.tasks-success {
+  color: var(--signal);
+  font-size: 13px;
+}

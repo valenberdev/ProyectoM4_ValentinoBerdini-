@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cerrarSesion } from "../features/auth/authService";
 import { useAuth } from "../hooks/useAuth";
 import { useTasks } from "../hooks/useTasks";
@@ -33,6 +33,7 @@ export function TasksPage() {
   const [taskActionError, setTaskActionError] = useState<string | null>(null);
   const [enviandoResumen, setEnviandoResumen] = useState(false);
   const [resumenError, setResumenError] = useState<string | null>(null);
+  const [resumenExitoso, setResumenExitoso] = useState(false);
   const [filtro, setFiltro] = useState<"all" | "pending" | "completed">("all");
   const [ordenarPor, setOrdenarPor] = useState<"none" | "priority" | "dueDate">(
     "none",
@@ -62,6 +63,13 @@ export function TasksPage() {
     return a.order - b.order;
   });
 
+  useEffect(() => {
+  if (resumenExitoso) {
+    const timer = setTimeout(() => setResumenExitoso(false), 4000);
+    return () => clearTimeout(timer);
+  }
+}, [resumenExitoso]);
+
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
@@ -74,12 +82,12 @@ export function TasksPage() {
 
     try {
       await Promise.all(
-        nuevoOrden.map((task, index) => updateTask(task.id, { order: index }))
+        nuevoOrden.map((task, index) => updateTask(task.id, { order: index })),
       );
       setDragError(null);
     } catch (err) {
-      setDragError('No se pudo guardar el nuevo orden. Intentá de nuevo.');
-      console.error('Error al reordenar tareas:', err);
+      setDragError("No se pudo guardar el nuevo orden. Intentá de nuevo.");
+      console.error("Error al reordenar tareas:", err);
     }
   }
 
@@ -88,8 +96,8 @@ export function TasksPage() {
       await toggleTaskCompletion(taskId, completed);
       setTaskActionError(null);
     } catch (err) {
-      setTaskActionError('No se pudo actualizar la tarea. Intentá de nuevo.');
-      console.error('Error al togglear tarea:', err);
+      setTaskActionError("No se pudo actualizar la tarea. Intentá de nuevo.");
+      console.error("Error al togglear tarea:", err);
     }
   }
 
@@ -98,8 +106,8 @@ export function TasksPage() {
       await deleteTask(taskId);
       setTaskActionError(null);
     } catch (err) {
-      setTaskActionError('No se pudo eliminar la tarea. Intentá de nuevo.');
-      console.error('Error al eliminar tarea:', err);
+      setTaskActionError("No se pudo eliminar la tarea. Intentá de nuevo.");
+      console.error("Error al eliminar tarea:", err);
     }
   }
 
@@ -108,8 +116,8 @@ export function TasksPage() {
       await updateTask(taskId, fields);
       setTaskActionError(null);
     } catch (err) {
-      setTaskActionError('No se pudo editar la tarea. Intentá de nuevo.');
-      console.error('Error al editar tarea:', err);
+      setTaskActionError("No se pudo editar la tarea. Intentá de nuevo.");
+      console.error("Error al editar tarea:", err);
     }
   }
 
@@ -119,6 +127,7 @@ export function TasksPage() {
 
     setEnviandoResumen(true);
     setResumenError(null);
+    setResumenExitoso(false);
 
     const { pendingTasks, completedTasks } = armarResumenTareas(tasks);
 
@@ -136,6 +145,8 @@ export function TasksPage() {
       if (!response.ok) {
         throw new Error("No se pudo enviar el resumen");
       }
+
+      setResumenExitoso(true);
     } catch (err) {
       setResumenError((err as Error).message);
     } finally {
@@ -164,7 +175,11 @@ export function TasksPage() {
           <div className="tasks-header-actions">
             <button
               className="tasks-logout-btn"
-              onClick={() => cerrarSesion().catch((err) => console.error('Error al cerrar sesión:', err))}
+              onClick={() =>
+                cerrarSesion().catch((err) =>
+                  console.error("Error al cerrar sesión:", err),
+                )
+              }
             >
               Cerrar sesión
             </button>
@@ -274,6 +289,9 @@ export function TasksPage() {
           {enviandoResumen ? "Enviando..." : "Enviar resumen por email"}
         </button>
         {dragError && <p className="tasks-error">{dragError}</p>}
+        {resumenExitoso && (
+          <p className="tasks-success">Resumen enviado correctamente ✓</p>
+        )}
         {resumenError && <div className="tasks-error">{resumenError}</div>}
       </main>
     </div>
