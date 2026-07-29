@@ -29,6 +29,8 @@ const CIRCUNFERENCIA = 2 * Math.PI * RADIO_ANILLO;
 export function TasksPage() {
   const { user } = useAuth();
   const { tasks, loading, error } = useTasks();
+  const [dragError, setDragError] = useState<string | null>(null);
+  const [taskActionError, setTaskActionError] = useState<string | null>(null);
   const [enviandoResumen, setEnviandoResumen] = useState(false);
   const [resumenError, setResumenError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<"all" | "pending" | "completed">("all");
@@ -70,9 +72,45 @@ export function TasksPage() {
 
     const nuevoOrden = arrayMove(tasksOrdenadas, oldIndex, newIndex);
 
-    await Promise.all(
-      nuevoOrden.map((task, index) => updateTask(task.id, { order: index })),
-    );
+    try {
+      await Promise.all(
+        nuevoOrden.map((task, index) => updateTask(task.id, { order: index }))
+      );
+      setDragError(null);
+    } catch (err) {
+      setDragError('No se pudo guardar el nuevo orden. Intentá de nuevo.');
+      console.error('Error al reordenar tareas:', err);
+    }
+  }
+
+  async function handleToggleComplete(taskId: string, completed: boolean) {
+    try {
+      await toggleTaskCompletion(taskId, completed);
+      setTaskActionError(null);
+    } catch (err) {
+      setTaskActionError('No se pudo actualizar la tarea. Intentá de nuevo.');
+      console.error('Error al togglear tarea:', err);
+    }
+  }
+
+  async function handleDeleteTask(taskId: string) {
+    try {
+      await deleteTask(taskId);
+      setTaskActionError(null);
+    } catch (err) {
+      setTaskActionError('No se pudo eliminar la tarea. Intentá de nuevo.');
+      console.error('Error al eliminar tarea:', err);
+    }
+  }
+
+  async function handleUpdateTask(taskId: string, fields: Partial<Task>) {
+    try {
+      await updateTask(taskId, fields);
+      setTaskActionError(null);
+    } catch (err) {
+      setTaskActionError('No se pudo editar la tarea. Intentá de nuevo.');
+      console.error('Error al editar tarea:', err);
+    }
   }
 
   async function handleEnviarResumen() {
@@ -126,7 +164,7 @@ export function TasksPage() {
           <div className="tasks-header-actions">
             <button
               className="tasks-logout-btn"
-              onClick={() => cerrarSesion()}
+              onClick={() => cerrarSesion().catch((err) => console.error('Error al cerrar sesión:', err))}
             >
               Cerrar sesión
             </button>
@@ -175,6 +213,7 @@ export function TasksPage() {
 
         {loading && <p className="tasks-loading">Cargando tareas...</p>}
         {error && <div className="tasks-error">{error}</div>}
+        {taskActionError && <p className="tasks-error">{taskActionError}</p>}
 
         <div className="chip-bar">
           <button
@@ -219,9 +258,9 @@ export function TasksPage() {
           >
             <TodoList
               tasks={tasksOrdenadas}
-              onToggleComplete={toggleTaskCompletion}
-              onDelete={deleteTask}
-              onUpdate={updateTask}
+              onToggleComplete={handleToggleComplete}
+              onDelete={handleDeleteTask}
+              onUpdate={handleUpdateTask}
               dragHabilitado={ordenarPor === "none"}
             />
           </SortableContext>
@@ -234,6 +273,7 @@ export function TasksPage() {
         >
           {enviandoResumen ? "Enviando..." : "Enviar resumen por email"}
         </button>
+        {dragError && <p className="tasks-error">{dragError}</p>}
         {resumenError && <div className="tasks-error">{resumenError}</div>}
       </main>
     </div>

@@ -96,6 +96,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Falta el email destinatario' });
   }
 
+  if (!Array.isArray(pendingTasks) || !Array.isArray(completedTasks)) {
+    return res.status(400).json({ error: 'pendingTasks y completedTasks deben ser arrays' });
+  }
+
+  const prioridadesValidas = ['high', 'medium', 'low'];
+  const pendingValido = pendingTasks.every(
+    (t) => typeof t.title === 'string' && prioridadesValidas.includes(t.priority)
+  );
+  if (!pendingValido) {
+    return res.status(400).json({ error: 'pendingTasks tiene un formato inválido' });
+  }
+
+  const completedValido = completedTasks.every((t) => typeof t.title === 'string');
+  if (!completedValido) {
+    return res.status(400).json({ error: 'completedTasks tiene un formato inválido' });
+  }
+
   try {
     const htmlBody = construirHtmlResumen(pendingTasks, completedTasks);
 

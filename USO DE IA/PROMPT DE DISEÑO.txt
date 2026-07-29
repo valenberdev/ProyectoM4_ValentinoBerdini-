@@ -1,0 +1,203 @@
+// PROMPT DE DISEÑO //
+
+Necesito agregar un sistema de diseño global a mi app de React + TypeScript + Vite, 
+sin tocar ninguna lógica de negocio existente (Firebase, hooks, servicios). Solo 
+estilos y la infraestructura de theming.
+
+1. En src/index.css (o crealo si no existe, e importalo en main.tsx), definí estas 
+   variables CSS con :root para dark (default) y [data-theme="light"] para light:
+
+Dark (default):
+--deep-slate: #12141C; --panel: #1B1F2B; --panel-hover: #212637;
+--hairline: #2A2F3F; --ink: #E8EAF0; --mist: #8B92A8;
+--signal: #5EEAD4; --signal-dim: rgba(94, 234, 212, 0.12);
+--high: #FB7185; --medium: #FBBF24; --low: #64748B;
+--danger: #FB7185; --danger-dim: rgba(251, 113, 133, 0.12);
+
+Light ([data-theme="light"]):
+--deep-slate: #F5F6FA; --panel: #FFFFFF; --panel-hover: #F0F1F6;
+--hairline: #E2E4EC; --ink: #1A1D29; --mist: #6B7185;
+--signal: #0D9488; --signal-dim: rgba(20, 184, 166, 0.10);
+
+2. Importá estas 3 fuentes de Google Fonts en index.html: Space Grotesk (600,700), 
+   Inter (400,500,600), JetBrains Mono (400,500).
+
+3. Creá un hook src/hooks/useTheme.ts que:
+   - Lea la preferencia guardada en localStorage (clave "theme"), default "dark" 
+     si no hay nada guardado.
+   - Exponga { theme, toggleTheme }.
+   - Al cambiar, actualice el atributo data-theme en document.documentElement 
+     y lo guarde en localStorage.
+   - Aplique el tema guardado en un useEffect al montar (para que persista al 
+     recargar la página).
+
+4. Creá un componente src/components/ThemeToggle.tsx: un botón circular de 44px 
+   que muestra 🌙 en modo dark y ☀️ en modo light, usando el hook useTheme.
+
+5. En body, aplicá: background: var(--deep-slate); color: var(--ink); 
+   transition: background 0.3s, color 0.3s; font-family: 'Inter', sans-serif;
+
+No conectes todavía el ThemeToggle a ninguna página específica, solo dejalo listo 
+para usar. Respetá prefers-reduced-motion deshabilitando la transición si el usuario 
+lo tiene activado.
+//
+
+// PROMPT DE DISEÑO 2 //
+
+Rediseñá visualmente LoginPage.tsx y RegisterPage.tsx usando el sistema de diseño 
+ya creado (variables CSS en index.css, fuentes Space Grotesk/Inter/JetBrains Mono). 
+NO cambies el handleSubmit, la validación, ni las llamadas a authService — solo el 
+JSX y los estilos.
+
+Estructura visual para ambas páginas:
+
+1. Contenedor centrado vertical y horizontalmente en toda la pantalla (min-height: 
+   100vh, display: flex, align-items: center, justify-content: center, padding 20px).
+
+2. Agregá el <ThemeToggle /> ya creado, posicionado fixed arriba a la derecha 
+   (top: 20px, right: 20px).
+
+3. Una tarjeta (max-width 380px, width 100%, background: var(--panel), border: 
+   1px solid var(--hairline), border-radius: 14px, padding: 32px 28px) con:
+   - Un brand/logo simple arriba: "◆ tareas" (font-family Space Grotesk, weight 
+     700, font-size 22px)
+   - Un subtítulo en var(--mist), font-size 13px (ej: "Iniciá sesión para ver tus 
+     tareas" / "Creá tu cuenta para empezar")
+   - Si hay error: una caja con background var(--danger-dim), border 1px solid 
+     var(--danger), color var(--danger), border-radius 8px, padding 10px 12px, 
+     font-size 13px, mostrando el mensaje de error existente
+   - Labels en font-family JetBrains Mono, uppercase, font-size 12px, letter-spacing 
+     0.06em, color var(--mist)
+   - Inputs con background var(--deep-slate), border 1px solid var(--hairline), 
+     border-radius 10px, padding 12px 14px, color var(--ink), y en :focus border-color 
+     var(--signal) con outline visible para accesibilidad
+   - Botón primario (submit) con background var(--signal), color var(--deep-slate), 
+     border-radius 10px, padding 13px, font-family Space Grotesk weight 600, sin 
+     borde, ancho completo
+   - Un divisor "o continuá con" (línea horizontal a cada lado usando var(--hairline), 
+     texto var(--mist) 12px en el medio)
+   - Un botón de Google: border 1px solid var(--hairline), background transparent, 
+     border-radius 10px, padding 12px, con el logo SVG oficial de Google de 4 colores 
+     (paths con los colores reales #4285F4, #34A853, #FBBB05, #EA4335), texto 
+     "Continuar con Google", conectado a la función iniciarSesionConGoogle ya 
+     existente en authService.ts (agregá el manejo de loading/error igual que el 
+     submit normal)
+   - Un link al pie (font-size 13px, color var(--mist), el link en sí color 
+     var(--signal)) hacia la otra página (Registrate / Iniciá sesión) — si ya 
+     existen estos Links de react-router-dom, mantenelos, solo actualizá el estilo
+
+Aplicá exactamente el mismo estilo de tarjeta en ambas páginas para consistencia.
+//
+
+// PROMPT DE DISEÑO 3 //
+
+Rediseñá visualmente TasksPage.tsx usando el sistema de diseño ya creado. NO cambies 
+useAuth, useTasks, la lógica de filtro/orden, handleDragEnd, ni handleEnviarResumen 
+— solo el JSX y los estilos.
+
+Estructura visual:
+
+1. Un <header> (max-width 640px, margin: 0 auto, padding: 20px 20px 0) con:
+   - Fila superior: brand "◆ tareas" a la izquierda (Space Grotesk, weight 700, 
+     20px) y el <ThemeToggle /> ya creado a la derecha, en un flex con 
+     justify-content: space-between
+   - Debajo, una "hero card" (background var(--panel), border 1px solid 
+     var(--hairline), border-radius 14px, padding 20px, display flex, gap 20px, 
+     align-items center) que contiene:
+     a) Un anillo de progreso SVG de 76x76px mostrando el % de tareas completadas 
+        (calculá: tasks.filter(t => t.completed).length / tasks.length * 100, 
+        manejando división por cero si no hay tareas). Usá dos <circle> superpuestos: 
+        uno de fondo (stroke var(--hairline)) y uno animado en primer plano (stroke 
+        var(--signal), stroke-linecap round), con stroke-dasharray/stroke-dashoffset 
+        calculados dinámicamente según el porcentaje real (circunferencia = 2 * PI * 32 
+        para radio 32). El SVG debe estar rotado -90deg para que empiece arriba.
+     b) Texto al lado: un "eyebrow" pequeño en JetBrains Mono uppercase mostrando la 
+        fecha de hoy, y un headline mostrando "X de Y tareas completadas" (Space 
+        Grotesk, weight 600, 17px)
+
+2. Un <main> (max-width 640px, margin: 0 auto, padding: 0 20px) con:
+   - Una barra de chips horizontal scrolleable (overflow-x: auto) con:
+     * 3 chips para los filtros (Todas/Pendientes/Completadas) — el activo con 
+       background var(--signal-dim), border-color var(--signal), color var(--signal); 
+       los inactivos con border var(--hairline), color var(--mist)
+     * Un chip/select para el ordenamiento (mantené el <select> funcional existente, 
+       pero estilizado como los demás chips — podés envolverlo o usar un select 
+       nativo con estilos custom)
+     Todos los chips: padding 8px 14px, border-radius 999px (píldora), font-size 13px
+
+   - La lista de tareas envuelta en el DndContext/SortableContext existente (no 
+     tocar esa lógica), pero el contenedor <ul> sin bullets, display flex, 
+     flex-direction column, gap 10px
+
+3. El botón "Enviar resumen por email": estilizalo como un botón secundario 
+   (background transparent, border 1px solid var(--hairline), color var(--ink), 
+   border-radius 10px, padding 12px 16px), ubicado antes del botón flotante de nueva 
+   tarea o en el header, a tu criterio de layout.
+
+4. Si hay resumenError: mismo estilo de caja de error que ya definimos en Login 
+   (background var(--danger-dim), border var(--danger), color var(--danger)).
+
+Mobile-first: todo el contenido con max-width 640px centrado, padding lateral 20px 
+en mobile.
+//
+
+// PROMPT DE DISEÑO 4 //
+
+Rediseñá visualmente TodoForm.tsx, TodoList.tsx y TodoItem.tsx usando el sistema de 
+diseño ya creado. NO cambies ninguna lógica: handleSubmit, la validación, las props 
+que reciben (onToggleComplete, onDelete, onUpdate), useSortable, ni el manejo de 
+estado existente — solo JSX y estilos.
+
+## TodoForm.tsx
+
+Convertilo en un formulario dentro de una tarjeta (mismo estilo que las de Login: 
+background var(--panel), border 1px solid var(--hairline), border-radius 14px, 
+padding 20px), con:
+- Input de título: mismo estilo que los inputs de Login (background var(--deep-slate), 
+  border var(--hairline), border-radius 10px, padding 12px 14px, focus con border 
+  var(--signal))
+- Textarea de descripción: mismo estilo, con resize: vertical y min-height 60px
+- Select de prioridad: mismo estilo de input, con las opciones mostrando el color 
+  de cada prioridad si es posible (o al menos mantenerlo consistente visualmente)
+- Input de fecha: mismo estilo de input
+- Si hay error: misma caja de error que ya definimos (background var(--danger-dim), 
+  border var(--danger))
+- Botón de submit: mismo estilo que el botón primario de Login (background 
+  var(--signal), color var(--deep-slate), border-radius 10px, Space Grotesk weight 
+  600), con el texto dinámico "Creando..." / "Crear tarea" que ya existe
+
+## TodoList.tsx
+
+Solo asegurate de que el <ul> no tenga list-style, con display flex, flex-direction 
+column, gap 10px (si ya se estilizó desde TasksPage, dejalo como está — no dupliques 
+estilos).
+
+## TodoItem.tsx
+
+Cada tarea como tarjeta con:
+- background var(--panel), border 1px solid var(--hairline)
+- border-left: 3px solid, con el color dinámico según task.priority: high → 
+  var(--high), medium → var(--medium), low → var(--low)
+- border-radius 14px, padding 14px 16px, display flex, gap 12px, align-items 
+  flex-start
+- Cursor "grab" en el contenedor (cursor: grabbing cuando :active)
+- El ícono de arrastre (⠿) como un <span> separado con los listeners de dnd-kit, 
+  color var(--hairline), NO en el resto de la tarjeta (para no bloquear los clicks 
+  en botones — esto ya está resuelto en el código actual, solo aplicá estilo)
+- Checkbox personalizado: en vez del input nativo, un <div> circular de 20x20px, 
+  border 1.5px solid var(--hairline), cuando task.completed: background 
+  var(--signal-dim), border-color var(--signal), mostrando un ✓ en var(--signal). 
+  Debe seguir funcionando como toggle al hacer click (llamando onToggleComplete)
+- Título: font-weight 500, font-size 15px; si completed, agregar text-decoration: 
+  line-through y opacity 0.6 a toda la tarjeta
+- Descripción: color var(--mist), font-size 13px
+- Metadata (prioridad + fecha si existe): font-size 11px, color var(--mist), la 
+  fecha en font-family JetBrains Mono
+- Botones de Editar/Eliminar: estilo texto simple o ícono, color var(--mist), 
+  hover color var(--ink) — mantené el modo de edición inline existente (los inputs 
+  de edición con el mismo estilo que el resto de los inputs del sistema)
+
+Verificá que ningún estilo nuevo interfiera con los listeners de arrastre de dnd-kit 
+en los botones de acción (Editar/Eliminar/checkbox deben seguir siendo clickeables 
+normalmente).
+//
